@@ -65,10 +65,6 @@ install_collector() {
 
     ensure curl -Lsf "$SERVICE_URL" -o "/etc/systemd/system/$SERVICE"
 
-    say 'Remounting root filesystem as read only.'
-
-    ensure mount -o remount,ro /
-
     say "Starting $SERVICE..."
 
     ensure systemctl daemon-reload
@@ -76,6 +72,10 @@ install_collector() {
     ensure systemctl enable collector.service
 
     ensure systemctl restart collector.service
+
+    say 'Remounting root filesystem as read only.'
+
+    ensure mount -o remount,ro /
 
     say "Successfully installed $APP."
 }
