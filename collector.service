@@ -1,0 +1,11 @@
+[Unit]
+Description=NetworkManager Debug Logs Collector
+Requires=NetworkManager.service
+After=NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/collector.sh
+
+[Install]
+WantedBy=multi-user.target
