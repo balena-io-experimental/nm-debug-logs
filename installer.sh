@@ -81,7 +81,7 @@ install_collector() {
 uninstall_collector() {
     say "Starting $SERVICE..."
 
-    ensure stop restart collector.service
+    ensure systemctl stop collector.service
 
     say 'Remounting root filesystem as read/write.'
 
