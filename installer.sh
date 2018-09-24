@@ -16,7 +16,7 @@ SERVICE_URL="$BASE_URL/$SERVICE"
 
 INSTALLER="$APP Installer"
 
-UNINSTALL=false
+INSTALL=true
 
 usage() {
     cat 1>&2 <<EOF
@@ -36,17 +36,17 @@ main() {
                 exit 0
                 ;;
             -u|--uninstall)
-                UNINSTALL=true
+                INSTALL=false
                 ;;
             *)
                 ;;
         esac
     done
 
-    if [ "$UNINSTALL" = false ]; then
+    if [ "$INSTALL" = true ]; then
         install_collector
     else
-        say "Uninstalled."
+        uninstall_collector
     fi
 }
 
@@ -65,6 +65,8 @@ install_collector() {
 
     ensure curl -Lsf "$SERVICE_URL" -o "/etc/systemd/system/$SERVICE"
 
+    say 'Remounting root filesystem as read only.'
+
     ensure mount -o remount,ro /
 
     say "Starting $SERVICE..."
@@ -74,6 +76,42 @@ install_collector() {
     ensure systemctl restart collector.service
 
     say "Successfully installed $APP."
+}
+
+uninstall_collector() {
+    say "Starting $SERVICE..."
+
+    ensure stop restart collector.service
+
+    say 'Remounting root filesystem as read/write.'
+
+    ensure mount -o remount,rw /
+
+    say "Deleting $SERVICE..."
+
+    rm "/usr/local/sbin/$SCRIPT"
+
+    rm "/etc/systemd/system/$SERVICE"
+
+    say 'Remounting root filesystem as read only.'
+
+    ensure mount -o remount,ro /
+
+    ensure systemctl daemon-reload
+
+    say 'Setting NetworkManager/wpa_supplicant logging level back to info...'
+
+    dbus-send --system --dest=fi.w1.wpa_supplicant1 \
+        /fi/w1/wpa_supplicant1 \
+        org.freedesktop.DBus.Properties.Set \
+        string:fi.w1.wpa_supplicant1 string:DebugLevel variant:string:"info"
+
+    dbus-send --system --dest=org.freedesktop.NetworkManager \
+        /org/freedesktop/NetworkManager \
+        org.freedesktop.NetworkManager.SetLogging \
+        string:"info" string:""
+
+    say "Successfully uninstalled $APP."
 }
 
 say() {
