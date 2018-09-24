@@ -73,6 +73,8 @@ install_collector() {
 
     ensure systemctl daemon-reload
 
+    ensure systemctl enable collector.service
+
     ensure systemctl restart collector.service
 
     say "Successfully installed $APP."
