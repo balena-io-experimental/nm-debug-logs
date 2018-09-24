@@ -10,7 +10,7 @@ dbus-send --system --dest=fi.w1.wpa_supplicant1 \
 dbus-send --system --dest=fi.w1.wpa_supplicant1 \
     /fi/w1/wpa_supplicant1 \
     org.freedesktop.DBus.Properties.Set \
-    string:fi.w1.wpa_supplicant1 string:DebugLevel variant:string:"msgdump"
+    string:fi.w1.wpa_supplicant1 string:DebugLevel variant:string:"debug"
 
 dbus-send --system --dest=org.freedesktop.NetworkManager \
     /org/freedesktop/NetworkManager \
