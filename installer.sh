@@ -9,10 +9,12 @@ APP='NetworkManager Debug Logs Collector'
 
 SCRIPT='collector.sh'
 SERVICE='collector.service'
+LOGGING='logging.conf'
 
 BASE_URL='https://github.com/resin-io-playground/nm-debug-logs/raw/master'
 SCRIPT_URL="$BASE_URL/$SCRIPT"
 SERVICE_URL="$BASE_URL/$SERVICE"
+LOGGING_URL="$BASE_URL/$LOGGING"
 
 INSTALLER="$APP Installer"
 
@@ -65,9 +67,17 @@ install_collector() {
 
     ensure curl -Lsf "$SERVICE_URL" -o "/etc/systemd/system/$SERVICE"
 
-    say "Starting $SERVICE..."
+    say "Downloading and installing $LOGGING_URL..."
+
+    ensure curl -Lsf "$LOGGING_URL" -o "/etc/NetworkManager/conf.d/$LOGGING"
+
+    say 'Restarting NetworkManager'
 
     ensure systemctl daemon-reload
+
+    ensure systemctl restart NetworkManager.service
+
+    say "Starting $SERVICE..."
 
     ensure systemctl enable collector.service
 
@@ -95,23 +105,19 @@ uninstall_collector() {
 
     rm "/etc/systemd/system/$SERVICE"
 
+    say 'Deleting NetworkManager logging level config'
+
+    rm "/etc/NetworkManager/conf.d/$LOGGING"
+
     say 'Remounting root filesystem as read only.'
 
     ensure mount -o remount,ro /
 
+    say 'Restarting NetworkManager'
+
     ensure systemctl daemon-reload
 
-    say 'Setting NetworkManager/wpa_supplicant logging level back to info...'
-
-    dbus-send --system --dest=fi.w1.wpa_supplicant1 \
-        /fi/w1/wpa_supplicant1 \
-        org.freedesktop.DBus.Properties.Set \
-        string:fi.w1.wpa_supplicant1 string:DebugLevel variant:string:"info"
-
-    dbus-send --system --dest=org.freedesktop.NetworkManager \
-        /org/freedesktop/NetworkManager \
-        org.freedesktop.NetworkManager.SetLogging \
-        string:"info" string:""
+    ensure systemctl restart NetworkManager.service
 
     say "Successfully uninstalled $APP."
 }
