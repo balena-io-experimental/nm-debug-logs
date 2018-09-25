@@ -119,6 +119,8 @@ uninstall_collector() {
 
     ensure systemctl restart NetworkManager.service
 
+    ensure systemctl restart wpa_supplicant.service
+
     say "Successfully uninstalled $APP."
 }
 
