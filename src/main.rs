@@ -6,8 +6,19 @@ extern crate log;
 #[macro_use]
 extern crate error_chain;
 
+#[macro_use]
+extern crate lazy_static;
+
 extern crate clap;
 extern crate env_logger;
+extern crate serde_yaml;
+extern crate systemd;
+
+extern crate futures;
+extern crate reqwest;
+extern crate tokio;
+extern crate tokio_ping;
+extern crate trust_dns_resolver;
 
 mod args;
 mod check;

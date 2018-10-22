@@ -6,6 +6,13 @@ authors = ["majorz"]
 [dependencies]
 log = "0.4"
 env_logger = "0.5"
+serde = "1.0"
+serde_yaml = "0.8"
+lazy_static = "1.1"
+tokio-ping = "0.2"
+tokio = "0.1"
+futures = "0.1"
+reqwest = "0.9"
 
 [dependencies.clap]
 version = "2.32"
@@ -13,4 +20,12 @@ default-features = false
 
 [dependencies.error-chain]
 version = "0.12"
+default-features = false
+
+[dependencies.systemd]
+git = "https://github.com/jmesmon/rust-systemd"
+
+[dependencies.trust-dns-resolver]
+version = "0.10.0-alpha.3"
+git = "https://github.com/bluejekyll/trust-dns"
 default-features = false
