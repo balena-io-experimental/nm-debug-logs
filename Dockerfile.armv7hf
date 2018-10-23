@@ -1,7 +1,7 @@
 ################################################################################
 # Arguments
 ################################################################################
-ARG rust_revision="1.29.1"
+ARG rust_revision="1.29.2"
 
 ################################################################################
 # Base image
@@ -18,14 +18,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 FROM base as rust
 
-# Install build tools
-RUN apt-get -q update && \
-    apt-get install -yq --no-install-recommends \
-        build-essential \
-        curl \
-        file \
-        libsystemd-dev
-
 ENV PATH=/root/.cargo/bin:$PATH
 
 # https://forums.resin.io/t/rustup-fails-for-armv8l/2661
@@ -37,6 +29,15 @@ RUN cp `which uname` /bin/uname-orig && echo '#!/bin/bash\nif [[ $1 == "-m" ]]; 
 
 # Install specific version of Rust (see ARG)
 RUN curl -sSf https://static.rust-lang.org/rustup.sh | sh -s -- -y --revision=${rust_revision}
+
+# Install build tools
+RUN apt-get -q update && \
+    apt-get install -yq --no-install-recommends \
+        build-essential \
+        curl \
+        file \
+        pkg-config \
+        libsystemd-dev
 
 ################################################################################
 # Dependencies
