@@ -23,7 +23,8 @@ RUN apt-get -q update && \
     apt-get install -yq --no-install-recommends \
         build-essential \
         curl \
-        file
+        file \
+        libsystemd-dev
 
 ENV PATH=/root/.cargo/bin:$PATH
 
