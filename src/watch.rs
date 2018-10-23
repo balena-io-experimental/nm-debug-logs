@@ -1,4 +1,4 @@
-use errors::*;
+use error::Result;
 
 use args::Args;
 

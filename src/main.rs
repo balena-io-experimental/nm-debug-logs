@@ -3,8 +3,7 @@
 #[macro_use]
 extern crate log;
 
-#[macro_use]
-extern crate error_chain;
+extern crate failure;
 
 #[macro_use]
 extern crate lazy_static;
@@ -13,7 +12,6 @@ extern crate clap;
 extern crate env_logger;
 extern crate serde_yaml;
 extern crate systemd;
-
 extern crate futures;
 extern crate reqwest;
 extern crate tokio;
@@ -22,22 +20,24 @@ extern crate trust_dns_resolver;
 
 mod args;
 mod check;
-mod errors;
+mod error;
 mod logger;
 mod watch;
+mod lookup;
 
 use args::{get_cli_args, NetmonSubcommand};
-use errors::*;
+
+use error::Result;
 
 fn main() {
     if let Err(ref e) = run() {
         error!("\x1B[1;31mError: {}\x1B[0m", e);
 
-        for inner in e.iter().skip(1) {
-            error!("  caused by: {}", inner);
-        }
+//        for inner in e.iter().skip(1) {
+//            error!("  caused by: {}", inner);
+//        }
 
-        ::std::process::exit(exit_code(e));
+        ::std::process::exit(1);
     }
 }
 

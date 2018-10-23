@@ -18,8 +18,8 @@ reqwest = "0.9"
 version = "2.32"
 default-features = false
 
-[dependencies.error-chain]
-version = "0.12"
+[dependencies.failure]
+version = "0.1"
 default-features = false
 
 [dependencies.systemd]
