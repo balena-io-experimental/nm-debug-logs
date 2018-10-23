@@ -1,5 +1,5 @@
 [package]
-name = "netmon"
+name = "netdiag"
 version = "0.1.0"
 authors = ["majorz"]
 
@@ -13,6 +13,7 @@ tokio-ping = "0.2"
 tokio = "0.1"
 futures = "0.1"
 reqwest = "0.9"
+systemd = "0.3"
 
 [dependencies.clap]
 version = "2.32"
@@ -21,9 +22,6 @@ default-features = false
 [dependencies.failure]
 version = "0.1"
 default-features = false
-
-[dependencies.systemd]
-git = "https://github.com/jmesmon/rust-systemd"
 
 [dependencies.trust-dns-resolver]
 version = "0.10.0-alpha.3"
