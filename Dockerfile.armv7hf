@@ -1,22 +1,10 @@
-################################################################################
-# Arguments
-################################################################################
 ARG rust_revision="1.29.2"
 
-################################################################################
-# Base image
-################################################################################
-
-FROM resin/%%RESIN_MACHINE_NAME%%-debian:buster as base
+FROM resin/%%RESIN_MACHINE_NAME%%-debian:buster
 
 ENV INITSYSTEM=on
 ENV DEBIAN_FRONTEND=noninteractive
-
-################################################################################
-# Rust image
-################################################################################
-
-FROM base as rust
+ENV DBUS_SYSTEM_BUS_ADDRESS=unix:path=/host/run/dbus/system_bus_socket
 
 # Install build tools
 RUN apt-get -q update && \
@@ -25,7 +13,8 @@ RUN apt-get -q update && \
         curl \
         file \
         pkg-config \
-        libsystemd-dev
+        libsystemd-dev \
+        libssl-dev
 
 ENV PATH=/root/.cargo/bin:$PATH
 
@@ -39,62 +28,10 @@ RUN cp `which uname` /bin/uname-orig && echo '#!/bin/bash\nif [[ $1 == "-m" ]]; 
 # Install specific version of Rust (see ARG)
 RUN curl -sSf https://static.rust-lang.org/rustup.sh | sh -s -- -y --revision=${rust_revision}
 
-RUN apt-get install -yq --no-install-recommends \
-        libssl-dev
-
-################################################################################
-# Dependencies
-################################################################################
-
-FROM rust as dependencies
-
-# Required by `cargo new app`
-ENV USER=root
-
-# Create new fake project
-WORKDIR /build
-RUN cargo new app
-
-# Copy real app dependencies
-COPY Cargo.* /build/app/
-
-# Build fake project with real dependencies
-WORKDIR /build/app
-RUN cargo build --release
-
-################################################################################
-# Builder
-################################################################################
-
-FROM rust as builder
-
-# We do not want to download deps, update registry, ... again
-COPY --from=dependencies /root/.cargo /root/.cargo
-
-# Copy everything, not just source code
-COPY . /build/app
-
-# Update already built deps from dependencies image
-COPY --from=dependencies /build/app/target /build/app/target
-
-# Build real app
-WORKDIR /build/app
-RUN rm -rf target/release/netdiag*
-RUN cargo build --release
-
-################################################################################
-# Final image
-################################################################################
-
-FROM base
-
-# Copy binary from builder image
 WORKDIR /app
-COPY --from=builder /build/app/target/release/netdiag .
 
-# Copy other folders required by the application. Example:
-#
-# COPY --from=builder /build/app/assets ./assets
+COPY . .
 
-# Launch application
-CMD ["/app/netdiag"]
+RUN cargo build --release
+
+CMD ["/app/target/release/netdiag"]
