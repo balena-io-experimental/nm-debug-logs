@@ -3,8 +3,8 @@ use reqwest;
 use tokio;
 use tokio_ping;
 
-use lookup::lookup_ip;
 use args::Args;
+use lookup::lookup_ip;
 
 use error::Result;
 
@@ -13,7 +13,6 @@ pub fn check(_args: &Args) -> Result<()> {
 
     let mut ips = lookup_ip("www.google.com")?;
     let ip = ips.pop().unwrap();
-
 
     let pinger = tokio_ping::Pinger::new();
     let stream = pinger.and_then(move |pinger| Ok(pinger.chain(ip).stream()));
