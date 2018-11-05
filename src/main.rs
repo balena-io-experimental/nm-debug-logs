@@ -6,13 +6,13 @@ extern crate log;
 extern crate failure;
 
 #[macro_use]
-extern crate lazy_static;
+extern crate serde_derive;
 
+extern crate chrono;
 extern crate clap;
 extern crate env_logger;
 extern crate futures;
 extern crate reqwest;
-extern crate serde_yaml;
 extern crate systemd;
 extern crate tokio;
 extern crate tokio_ping;

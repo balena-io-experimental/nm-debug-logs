@@ -3,29 +3,145 @@ use error::Result;
 use args::Args;
 
 use systemd::id128::Id128;
-use systemd::journal::{Journal, JournalFiles, JournalSeek};
+use systemd::journal::{Journal, JournalFiles, JournalRecord, JournalSeek};
 
-use serde_yaml;
+use std::time::SystemTime;
 
-use std::collections::BTreeMap;
+use chrono::*;
 
-lazy_static! {
-    static ref RECORD_KEYS: BTreeMap<&'static str, &'static str> = {
-        let mut m = BTreeMap::new();
-        m.insert("MESSAGE", "M");
-        m.insert("NM_LOG_DOMAINS", "ND");
-        m.insert("NM_LOG_LEVEL", "NL");
-        m.insert("NM_DEVICE", "ND");
-        m.insert("SYSLOG_FACILITY", "SF");
-        m.insert("SYSLOG_IDENTIFIER", "SI");
-        m.insert("CODE_FILE", "CF");
-        m.insert("CODE_LINE", "CL");
-        m.insert("TIMESTAMP_BOOTTIME", "TB");
-        m.insert("TIMESTAMP_MONOTONIC", "TM");
-        m.insert("_SOURCE_MONOTONIC_TIMESTAMP", "SM");
-        m.insert("_SOURCE_REALTIME_TIMESTAMP", "SR");
-        m
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Systemd {
+    pub code_file: String,
+    pub code_line: usize,
+    pub code_func: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum NetworkManagerLogLevel {
+    Err,
+    Warn,
+    Info,
+    Debug,
+    Trace,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum NetworkManagerDomain {
+    Platform,
+    Rfkill,
+    Ether,
+    Wifi,
+    Bt,
+    Mb,
+    Dhcp4,
+    Dhcp6,
+    Ppp,
+    WifiScan,
+    Ip4,
+    Ip6,
+    Autoip4,
+    Dns,
+    Vpn,
+    Sharing,
+    Supplicant,
+    Agents,
+    Settings,
+    Suspend,
+    Core,
+    Device,
+    Olpc,
+    Wimax,
+    Infiniband,
+    Firewall,
+    Adsl,
+    Bond,
+    Vlan,
+    Bridge,
+    DbusProps,
+    Team,
+    Concheck,
+    Dcb,
+    Dispatch,
+    Audit,
+    Systemd,
+    VpnPlugin,
+    Proxy,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NetworkManager {
+    pub log_level: NetworkManagerLogLevel,
+    pub domain: NetworkManagerDomain,
+    pub device: Option<String>,
+    pub code_file: String,
+    pub code_line: usize,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Identifier {
+    Kernel,
+    Systemd(Systemd),
+    NetworkManager(NetworkManager),
+    NetworkManagerDispatcher,
+    WpaSupplicant,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Entry {
+    message: String,
+    time: DateTime<Utc>,
+    identifier: Identifier,
+}
+
+fn record_to_entry(record: JournalRecord, timestamp: SystemTime) -> Option<Entry> {
+    let identifier = match record.get("SYSLOG_IDENTIFIER")? as &str {
+        "kernel" => Identifier::Kernel,
+        "systemd" => {
+            let code_file = record.get("CODE_FILE")?.clone();
+            let code_line = if let Ok(code_line) = record.get("CODE_LINE")?.parse::<usize>() {
+                code_line
+            } else {
+                return None;
+            };
+            let code_func = record.get("CODE_FUNC")?.clone();
+            Identifier::Systemd(Systemd {
+                code_file,
+                code_line,
+                code_func,
+            })
+        }
+        "NetworkManager" => {
+            let code_file = record.get("CODE_FILE")?.clone();
+            let code_line = if let Ok(code_line) = record.get("CODE_LINE")?.parse::<usize>() {
+                code_line
+            } else {
+                return None;
+            };
+            let log_level = NetworkManagerLogLevel::Info;
+            let domain = NetworkManagerDomain::Core;
+            let device = None;
+            Identifier::NetworkManager(NetworkManager {
+                log_level,
+                domain,
+                device,
+                code_file,
+                code_line,
+            })
+        }
+        "nm-dispatcher" => Identifier::NetworkManagerDispatcher,
+        "wpa_supplicant" => Identifier::WpaSupplicant,
+        _ => return None,
     };
+
+    let message = record.get("MESSAGE")?.clone();
+
+    let time = DateTime::<Utc>::from(timestamp);
+
+    Some(Entry {
+        message,
+        time,
+        identifier,
+    })
 }
 
 pub fn watch(_args: &Args) -> Result<()> {
@@ -37,27 +153,24 @@ pub fn watch(_args: &Args) -> Result<()> {
 
     journal.seek(JournalSeek::Head)?;
 
-    let mut v = vec![];
+    let mut entries = vec![];
 
     loop {
         match journal.next_record()? {
             Some(record) => {
-                let mut filtered: BTreeMap<String, String> = BTreeMap::new();
+                let timestamp = journal.timestamp()?;
 
-                for (key, value) in record.iter() {
-                    if let Some(short) = RECORD_KEYS.get(key as &str) {
-                        filtered.insert(short.to_string(), value.to_string());
-                    }
+                if let Some(entry) = record_to_entry(record, timestamp) {
+                    entries.push(entry);
                 }
-
-                v.push(filtered);
             }
             None => break,
         }
     }
 
-    let s = serde_yaml::to_string(&v).unwrap();
-    println!("{}", s);
+    for entry in &entries[..1000] {
+        println!("{:?}", entry);
+    }
 
     Ok(())
 }

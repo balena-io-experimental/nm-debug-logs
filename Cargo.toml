@@ -7,13 +7,17 @@ authors = ["majorz"]
 log = "0.4"
 env_logger = "0.5"
 serde = "1.0"
-serde_yaml = "0.8"
-lazy_static = "1.1"
+serde_derive = "1.0"
 tokio-ping = "0.2"
 tokio = "0.1"
 futures = "0.1"
 reqwest = "0.9"
 systemd = "0.3"
+bincode = "1.0"
+
+[dependencies.chrono]
+version = "0.4"
+features = ["serde"]
 
 [dependencies.clap]
 version = "2.32"
@@ -24,6 +28,5 @@ version = "0.1"
 default-features = false
 
 [dependencies.trust-dns-resolver]
-version = "0.10.0-alpha.3"
-git = "https://github.com/bluejekyll/trust-dns"
+version = "0.10"
 default-features = false
